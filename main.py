@@ -5,6 +5,8 @@ import datetime
 import boto3
 import botocore
 import subprocess
+import schedule
+import time
 
 s3_bucket = "idseq-database"
 s3_top_folder = "ncbi-sources"
@@ -23,10 +25,18 @@ folders_to_download = ["/pub/taxonomy/accession2taxid"]
 def main():
     start_copy_flow()
 
+    schedule.every(12).hours.do(start_copy_flow)
+    print("Scheduler running...")
+
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
 
 def start_copy_flow():
     date_tag = datetime.datetime.today().strftime("%Y-%m-%d")
     dated_subfolder = f"{s3_top_folder}/{date_tag}"
+    print(f"Dated subfolder: {dated_subfolder}")
 
     try:
         # Don't run if the done file is there already
@@ -64,7 +74,9 @@ def download_file(file):
 
 def download_folder(folder):
     print(f"Downloading folder {folder} ...")
-    # wget to folder 'temp', don't follow parent links, don't include host name, cut out 2 middle directories, ignore robots.txt, ignore index.html
+    # wget to folder 'temp', no verbose, don't follow parent links,
+    # don't include host name, cut out 2 middle directories, ignore
+    # robots.txt, ignore index.html
     cmd = f"wget -P temp -crnv -np -nH --cut-dirs=2 -e robots=off -R 'index.html*' {folder}/"
     command_execute(cmd)
 
