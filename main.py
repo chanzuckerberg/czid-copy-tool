@@ -57,7 +57,7 @@ def start_copy_flow():
             upload_temp_file(file, dated_subfolder)
 
         for folder in folders_to_download:
-            upload_folder(folder, dated_subfolder)
+            upload_temp_folder(folder, dated_subfolder)
 
         write_done_file(dated_subfolder)
 
@@ -104,7 +104,7 @@ def upload_file(src, dst):
     s3.Bucket(s3_bucket).upload_file(src, dst)
 
 
-def upload_folder(folder, dated_subfolder):
+def upload_temp_folder(folder, dated_subfolder):
     folder = os.path.basename(folder)
     for base in os.listdir(f"temp/{folder}"):
         src = f"temp/{folder}/{base}"
