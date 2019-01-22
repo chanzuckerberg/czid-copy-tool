@@ -19,13 +19,12 @@ files_to_download = [
     "/pub/taxonomy/taxdump.tar.gz",
 ]
 folders_to_download = ["/pub/taxonomy/accession2taxid"]
-# folders_to_download = ["/pub/taxonomy/biocollections"]
 
 
 def main():
     start_copy_flow()
 
-    schedule.every(12).hours.do(start_copy_flow)
+    schedule.every(7).days.do(start_copy_flow)
     print("Scheduler running...")
 
     while True:
