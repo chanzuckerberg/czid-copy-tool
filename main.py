@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+'''
+ To run this script with aegea do:
+
+aegea batch submit --command="cd /mnt; git clone https://github.com/chanzuckerberg/idseq-copy-tool.git; cd idseq-copy-tool; pip3 install schedule; python3 main.py "  --storage /mnt=500 --volume-type gp2 --ecr-image idseq_dag --memory 120000 --queue idseq-prod-lomem --vcpus 16 --job-role idseq-pipeline
+
+'''
+
+import argparse
 import os
 import datetime
 import boto3
@@ -22,14 +30,21 @@ folders_to_download = ["/pub/taxonomy/accession2taxid"]
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--run-as-daemom', dest='run_as_daemon', action='store_true')
+    parser.set_defaults(run_as_daemon=False)
+
     start_copy_flow()
 
-    schedule.every(7).days.do(start_copy_flow)
-    print("Scheduler running...")
+    args = parser.parse_args()
 
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    if args.run_as_daemon: # Infinite loop
+        schedule.every(7).days.do(start_copy_flow)
+        print("Scheduler running...")
+
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
 
 
 def start_copy_flow():
@@ -114,6 +129,5 @@ def upload_temp_folder(folder, dated_subfolder):
 def write_done_file(dated_subfolder):
     print(f"Uploading done file ...")
     s3.Object(s3_bucket, f"{dated_subfolder}/done").put(Body="")
-
 
 main()
