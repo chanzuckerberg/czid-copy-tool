@@ -26,6 +26,8 @@ files_to_download = [
     "/blast/db/FASTA/nr.gz",
     "/pub/taxonomy/taxdump.tar.gz",
 ]
+
+files_to_unzip = set(["/blast/db/FASTA/nt.gz", "/blast/db/FASTA/nr.gz"])
 folders_to_download = ["/pub/taxonomy/accession2taxid"]
 
 
@@ -68,7 +70,7 @@ def start_copy_flow():
             download_folder(f"{remote_server}{folder}")
 
         for file in files_to_download:
-            upload_temp_file(file, dated_subfolder)
+            upload_temp_file(file, dated_subfolder, file in files_to_unzip)
 
         for folder in folders_to_download:
             upload_temp_folder(folder, dated_subfolder)
@@ -106,11 +108,15 @@ def command_execute(cmd):
         raise RuntimeError(f"Command error: {stderr}")
 
 
-def upload_temp_file(file, dated_subfolder):
+def upload_temp_file(file, dated_subfolder, unzip):
     file = os.path.basename(file)
     src = f"temp/{file}"
     dst = f"{dated_subfolder}/{file}"
     upload_file(src, dst)
+    if unzip: # the file
+        # A lot of assumptions here. main assumption is that the unzipped file is src[:-3]
+        command_execute(f"gunzip {src}")
+        upload_file(src[:-3], dst[:-3])
 
 
 def upload_file(src, dst):
