@@ -8,12 +8,12 @@ aegea batch submit --command="cd /mnt; git clone https://github.com/chanzuckerbe
 '''
 
 import argparse
-import os
-import datetime
 import boto3
 import botocore
-import subprocess
+import datetime
+import os
 import schedule
+import subprocess
 import time
 
 s3_bucket = "idseq-database"
@@ -23,8 +23,11 @@ s3 = boto3.resource("s3")
 remote_server = "ftp.ncbi.nih.gov"
 files_to_download = [
     "/blast/db/FASTA/nt.gz",
+    "/blast/db/FASTA/nt.gz.md5",
     "/blast/db/FASTA/nr.gz",
+    "/blast/db/FASTA/nr.gz.md5",
     "/pub/taxonomy/taxdump.tar.gz",
+    "/pub/taxonomy/taxdump.tar.gz.md5",
 ]
 
 files_to_unzip = set(["/blast/db/FASTA/nt.gz", "/blast/db/FASTA/nr.gz"])
