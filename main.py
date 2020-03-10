@@ -30,8 +30,14 @@ files_to_download = [
     "/pub/taxonomy/taxdump.tar.gz.md5",
 ]
 
-files_to_unzip = set(["/blast/db/FASTA/nt.gz", "/blast/db/FASTA/nr.gz"])
-folders_to_download = ["/pub/taxonomy/accession2taxid"]
+files_to_unzip = set([
+    "/blast/db/FASTA/nt.gz",
+    "/blast/db/FASTA/nr.gz"
+    "/pub/taxonomy/taxdump.tar.gz",
+])
+folders_to_download = [
+    "/pub/taxonomy/accession2taxid",
+]
 
 
 def main():
@@ -61,6 +67,7 @@ def start_copy_flow():
         # Don't run if the done file is there already
         s3.Object(s3_bucket, f"{dated_subfolder}/done").load()
         print("Done file exists already. Skipping this run.")
+        print(f"s3://{s3_bucket}/{dated_subfolder}/done")
         return
     except botocore.exceptions.ClientError:
         print(f"Done file doesn't exist. Should run.")
@@ -120,6 +127,9 @@ def upload_temp_file(file, dated_subfolder, unzip):
         # A lot of assumptions here. main assumption is that the unzipped file is src[:-3]
         command_execute(f"gunzip {src}")
         upload_file(src[:-3], dst[:-3])
+        # Upload a lz4 copy because they are more reliable to subsequently download
+        lz4_out = lz4(src[:-3])
+        upload_file(lz4_out, f"{dated_subfolder}/{os.path.basename(lz4_out)}")
 
 
 def upload_file(src, dst):
@@ -139,4 +149,14 @@ def write_done_file(dated_subfolder):
     print(f"Uploading done file ...")
     s3.Object(s3_bucket, f"{dated_subfolder}/done").put(Body="")
 
-main()
+
+def lz4(src):
+    # See also idseq_dag/steps/generate_lz4.py
+    dst = src + '.lz4'
+    print(f"Compressing {src} to lz4 ...")
+    command_execute(f'lz4 -9 -f {src} {dst}')
+    return dst
+
+
+if __name__ == '__main__':
+    main()
